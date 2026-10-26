@@ -1,0 +1,27 @@
+# CachyOS/Arch Linux: componentes da sessão Hyprland
+alacritty
+brightnessctl
+btop
+cachyos-hypr-noctalia
+dolphin
+firefox
+gnome-calculator
+gnome-text-editor
+greetd
+grim
+hyprland
+hyprpicker
+kitty
+noctalia
+noctalia-greeter
+pipewire-audio
+pipewire-pulse
+slurp
+swash
+udiskie
+uwsm
+wl-clipboard
+xorg-xhost
+xdg-desktop-portal
+xdg-desktop-portal-gtk
+xdg-desktop-portal-hyprland
