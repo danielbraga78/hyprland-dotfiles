@@ -3,8 +3,11 @@ alacritty
 brightnessctl
 btop
 cachyos-hypr-noctalia
+cachyos-fish-config
 dolphin
 firefox
+fastfetch
+fish
 gnome-calculator
 gnome-text-editor
 greetd

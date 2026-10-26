@@ -9,6 +9,10 @@ locais como o caminho das wallpapers foram generalizados.
 - `.config/hypr/`: configuração Lua do Hyprland e regras de screencopy.
 - `.config/noctalia/config.toml`: barra, tema, atalhos e integração da sessão.
 - `.config/uwsm/env`: variáveis de ambiente da sessão.
+- `.config/alacritty/`: preferências do Alacritty e tema Noctalia.
+- `.config/fish/`: configuração do Fish; `fish_variables` (estado local do
+  shell) foi intencionalmente excluído.
+- `.config/fastfetch/`: configuração e logo do Fastfetch.
 - `etc/greetd/`: configuração do greetd e ambientes de sessão.
 - `packages/arch.txt`: pacotes diretamente usados por esta configuração, não
   uma exportação de todos os pacotes instalados no computador.
@@ -26,9 +30,13 @@ Faça backup das configurações existentes antes de copiar:
 ```sh
 cp -a ~/.config/hypr ~/.config/hypr.backup
 cp -a .config/hypr ~/.config/
-mkdir -p ~/.config/noctalia ~/.config/uwsm
+mkdir -p ~/.config/noctalia ~/.config/uwsm ~/.config/fish/conf.d
 cp -a .config/noctalia/config.toml ~/.config/noctalia/
 cp -a .config/uwsm/env ~/.config/uwsm/
+cp -a .config/alacritty ~/.config/
+cp -a .config/fish/config.fish ~/.config/fish/
+cp -a .config/fish/conf.d/copilot.fish ~/.config/fish/conf.d/
+cp -a .config/fastfetch ~/.config/
 ```
 
 Revise `~/.config/noctalia/config.toml` e ajuste `wallpaper.directory` para o
