@@ -7,6 +7,9 @@ locais como o caminho das wallpapers foram generalizados.
 ## Conteúdo
 
 - `.config/hypr/`: configuração Lua do Hyprland e regras de screencopy.
+- `.config/hypr/scripts/dynamic_workspaces.py`: mantém três workspaces base,
+  cria um workspace vazio quando os existentes estão ocupados e remove espaços
+  extras vazios.
 - `.config/noctalia/config.toml`: barra, tema, atalhos e integração da sessão.
 - `.config/uwsm/env`: variáveis de ambiente da sessão.
 - `.config/alacritty/`: preferências do Alacritty e tema Noctalia.
@@ -38,6 +41,10 @@ cp -a .config/fish/config.fish ~/.config/fish/
 cp -a .config/fish/conf.d/copilot.fish ~/.config/fish/conf.d/
 cp -a .config/fastfetch ~/.config/
 ```
+
+O gerenciador de workspaces dinâmicos inicia junto com a sessão Hyprland.
+Os três primeiros workspaces permanecem disponíveis; depois que todos tiverem
+janelas, um workspace vazio é mantido como espaço de reserva.
 
 Revise `~/.config/noctalia/config.toml` e ajuste `wallpaper.directory` para o
 caminho absoluto da sua pasta de wallpapers. Os nomes dos monitores em

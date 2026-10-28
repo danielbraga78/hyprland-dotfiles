@@ -10,3 +10,5 @@ known_hosts
 *.log
 *.swp
 *.bak
+__pycache__/
+*.py[cod]

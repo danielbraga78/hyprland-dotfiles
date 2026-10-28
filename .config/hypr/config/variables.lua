@@ -13,4 +13,5 @@ MONITOR3 = ""
 PRIMARY_MONITOR = MONITOR1
 
 -- Workspaces
+MIN_WORKSPACES = 3
 NUM_WPM = 5 -- Number of workspaces per monitor (Max 10)

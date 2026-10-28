@@ -19,6 +19,7 @@ noctalia
 noctalia-greeter
 pipewire-audio
 pipewire-pulse
+python
 slurp
 swash
 udiskie
