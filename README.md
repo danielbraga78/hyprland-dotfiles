@@ -8,8 +8,8 @@ locais como o caminho das wallpapers foram generalizados.
 
 - `.config/hypr/`: configuração Lua do Hyprland e regras de screencopy.
 - `.config/hypr/scripts/dynamic_workspaces.py`: mantém três workspaces base,
-  cria um workspace vazio quando os existentes estão ocupados e remove espaços
-  extras vazios.
+  compacta os workspaces ocupados para não deixar lacunas, cria um espaço vazio
+  ao final quando os atuais estão ocupados e remove espaços extras vazios.
 - `.config/noctalia/config.toml`: barra, tema, atalhos e integração da sessão.
 - `.config/uwsm/env`: variáveis de ambiente da sessão.
 - `.config/alacritty/`: preferências do Alacritty e tema Noctalia.

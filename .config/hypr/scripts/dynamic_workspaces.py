@@ -37,51 +37,55 @@ def hyprctl_json(command):
     return json.loads(result.stdout)
 
 
-def workspace_plan(workspaces, active_id):
+def workspace_plan(workspaces):
     numeric = {
         int(workspace["id"]): int(workspace.get("windows", 0))
         for workspace in workspaces
         if int(workspace["id"]) > 0
     }
+    occupied_ids = sorted(
+        workspace_id
+        for workspace_id, window_count in numeric.items()
+        if window_count > 0
+    )
+    moves = {
+        source_id: target_id
+        for target_id, source_id in enumerate(occupied_ids, start=1)
+        if source_id != target_id
+    }
+
     desired_persistence = {
         workspace_id: True
         for workspace_id in range(1, MIN_WORKSPACES + 1)
     }
-    baseline_is_full = all(
-        numeric.get(workspace_id, 0) > 0
-        for workspace_id in desired_persistence
+    desired_persistence.update(
+        {workspace_id: False for workspace_id in numeric if workspace_id > MIN_WORKSPACES}
     )
-    empty_extras = [
-        workspace_id
-        for workspace_id, window_count in numeric.items()
-        if workspace_id > MIN_WORKSPACES and window_count == 0
-    ]
 
-    reserved_empty = None
-    if baseline_is_full and empty_extras:
-        reserved_empty = active_id if active_id in empty_extras else max(empty_extras)
-
-    for workspace_id, window_count in numeric.items():
-        if workspace_id > MIN_WORKSPACES:
-            desired_persistence[workspace_id] = (
-                window_count == 0 and workspace_id == reserved_empty
-            )
-
+    trailing_id = (
+        len(occupied_ids) + 1
+        if len(occupied_ids) >= MIN_WORKSPACES
+        else None
+    )
     create_id = None
-    all_workspaces_are_full = (
-        baseline_is_full
-        and not empty_extras
-        and all(window_count > 0 for window_count in numeric.values())
-    )
-    if all_workspaces_are_full:
-        create_id = next(
-            workspace_id
-            for workspace_id in range(MIN_WORKSPACES + 1, max(numeric, default=MIN_WORKSPACES) + 2)
-            if workspace_id not in numeric
-        )
-        desired_persistence[create_id] = True
+    if trailing_id is not None:
+        desired_persistence[trailing_id] = True
+        if trailing_id not in numeric:
+            create_id = trailing_id
 
-    return desired_persistence, create_id
+    return desired_persistence, create_id, moves
+
+
+def active_workspace_after_compaction(active_id, occupied_ids, moves):
+    if active_id in moves:
+        return moves[active_id]
+    if (
+        active_id > MIN_WORKSPACES
+        and active_id not in occupied_ids
+        and active_id not in moves.values()
+    ):
+        return max(MIN_WORKSPACES, len(occupied_ids) + 1)
+    return None
 
 
 def set_persistent(workspace_id, persistent):
@@ -102,6 +106,41 @@ def set_persistent(workspace_id, persistent):
         )
 
 
+def move_window(address, workspace_id):
+    if not address.startswith("0x") or not all(
+        character in "0123456789abcdefABCDEF"
+        for character in address[2:]
+    ):
+        raise ValueError(f"Invalid Hyprland window address: {address!r}")
+
+    expression = (
+        "hl.dsp.window.move({ "
+        f'workspace = "{workspace_id}", '
+        f'window = "address:{address}", '
+        "follow = false })"
+    )
+    result = subprocess.run(
+        ["hyprctl", "dispatch", expression],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout.strip() != "ok":
+        raise RuntimeError(f"Could not move window {address}: {result.stdout.strip()}")
+
+
+def focus_workspace(workspace_id):
+    expression = f'hl.dsp.focus({{ workspace = "{workspace_id}" }})'
+    result = subprocess.run(
+        ["hyprctl", "dispatch", expression],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout.strip() != "ok":
+        raise RuntimeError(f"Could not focus workspace {workspace_id}: {result.stdout.strip()}")
+
+
 def reconcile():
     rules = hyprctl_json("workspacerules")
     persistence = {
@@ -117,8 +156,35 @@ def reconcile():
 
     workspaces = hyprctl_json("workspaces")
     active_id = int(hyprctl_json("activeworkspace")["id"])
-    desired, create_id = workspace_plan(workspaces, active_id)
-    workspace_ids = {int(workspace["id"]) for workspace in workspaces if int(workspace["id"]) > 0}
+    desired, create_id, moves = workspace_plan(workspaces)
+    occupied_ids = {
+        int(workspace["id"])
+        for workspace in workspaces
+        if int(workspace["id"]) > 0 and int(workspace.get("windows", 0)) > 0
+    }
+    workspace_ids = {
+        int(workspace["id"])
+        for workspace in workspaces
+        if int(workspace["id"]) > 0
+    }
+    focus_id = active_workspace_after_compaction(active_id, occupied_ids, moves)
+
+    if moves:
+        for workspace_id, persistent in desired.items():
+            if persistent and not persistence.get(workspace_id, False):
+                set_persistent(workspace_id, True)
+
+        clients = hyprctl_json("clients")
+        for client in clients:
+            source_id = int(client.get("workspace", {}).get("id", 0))
+            if source_id in moves:
+                move_window(client["address"], moves[source_id])
+
+        if focus_id is not None:
+            focus_workspace(focus_id)
+
+        logging.info("Compacted workspaces: %s", moves)
+        return
 
     for workspace_id, persistent in desired.items():
         if (
@@ -131,6 +197,9 @@ def reconcile():
                 "Enabled" if persistent else "Disabled",
                 workspace_id,
             )
+
+    if focus_id is not None:
+        focus_workspace(focus_id)
 
     if create_id is not None:
         logging.info("Created empty workspace %s", create_id)
